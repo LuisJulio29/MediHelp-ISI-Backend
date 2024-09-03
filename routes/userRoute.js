@@ -60,9 +60,9 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("get-user-info-by-id", authMiddlewares, async (req, res) => {
+router.post("/get-user-info-by-id",authMiddlewares, async (req,res) => {
   try {
-    const user = await User.findById(req.body.userId);
+    const user = await User.findOne({_id: req.body.userId});
     if (!user) {
       return res
         .status(200)
