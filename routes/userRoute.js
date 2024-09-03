@@ -43,11 +43,14 @@ router.post("/login", async (req, res) => {
       return res
         .status(200)
         .send({ message: "Contraseña incorrecta", success: false });
-    }else{
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET,{expiresIn:"1d"});
-      res.status(200).send({ message: "Usuario Logeado", success: true, data:token });
+    } else {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "1d",
+      });
+      res
+        .status(200)
+        .send({ message: "Usuario Logeado", success: true, data: token });
     }
-
   } catch (error) {
     console.log(error);
     res
@@ -58,7 +61,9 @@ router.post("/login", async (req, res) => {
 
 router.post("get-user-info-by-id", async (req, res) => {
   try {
+    
   } catch (error) {
+
   }
 });
 module.exports = router;
