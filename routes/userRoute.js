@@ -73,7 +73,7 @@ router.post("/get-user-info-by-id",authMiddlewares, async (req,res) => {
         .send({
           message: "Usuario Encontrado",
           success: true,
-          data: { name: user.name, email: user.email },
+          data: { name: user.name, email: user.email , isDoctor: user.isDoctor, isAdmin: user,seenNotifications: user.seenNotifications, unseenNotifications: user.unseenNotifications},
         });
     }
   } catch (error) {
