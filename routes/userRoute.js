@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/userModel");
+const Doctor = require("../models/doctorModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const authMiddlewares = require("../middlewares/authMiddlewares");
@@ -80,6 +81,36 @@ router.post("/get-user-info-by-id",authMiddlewares, async (req,res) => {
     res
       .status(500)
       .send({ message: "Error al obtener el Usuario", success: false, error });
+  }
+});
+
+router.post("/apply-doctor-account",authMiddlewares,async (req, res) => {
+  try {
+    const newDoctor = new Doctor({...req.body,status: "pending"});
+    await newDoctor.save();
+    const adminUser = await User.findOne({isAdmin: true});
+
+    const unseenNotifications = adminUser.unseenNotifications;
+    unseenNotifications.push(
+      {
+        type:"new-doctor-request",
+        message: `${newDoctor.fristName} ${newDoctor.lastName} ha aplicado para una cuenta de doctor`,
+        data:{
+          doctorId: newDoctor._id,
+          newDoctorame: newDoctor.fristName + " " + newDoctor.lastName,
+        },
+        onclick: "/admin/doctors"
+      })
+    await User.findByIdAndUpdate(adminUser._id,{unseenNotifications: unseenNotifications});
+    res
+      .status(200)
+      .send({ message: "Aplicación a la cuenta de doctor enviada", success: true });
+
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .send({ message: "Error al aplicar a la cuenta de doctor", success: false, error });
   }
 });
 
