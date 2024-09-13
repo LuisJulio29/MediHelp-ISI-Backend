@@ -94,10 +94,10 @@ router.post("/apply-doctor-account",authMiddlewares,async (req, res) => {
     unseenNotifications.push(
       {
         type:"new-doctor-request",
-        message: `${newDoctor.fristName} ${newDoctor.lastName} ha aplicado para una cuenta de doctor`,
+        message: `${newDoctor.firstName} ${newDoctor.lastName} ha aplicado para una cuenta de doctor`,
         data:{
           doctorId: newDoctor._id,
-          newDoctorame: newDoctor.fristName + " " + newDoctor.lastName,
+          name: newDoctor.firstName + " " + newDoctor.lastName,
         },
         onclick: "/admin/doctors"
       })
@@ -113,5 +113,50 @@ router.post("/apply-doctor-account",authMiddlewares,async (req, res) => {
       .send({ message: "Error al aplicar a la cuenta de doctor", success: false, error });
   }
 });
+
+router.post("/mark-all-notifications-as-seen",authMiddlewares,async (req, res) => {
+  try {
+   const user = await User.findOne({_id: req.body.userId});
+   const unseenNotifications = user.unseenNotifications;
+   const seenNotifications = user.seenNotifications;
+   seenNotifications.push(...unseenNotifications);
+   user.unseenNotifications = [];
+   user.seenNotifications = seenNotifications;
+   const updatedUser = await user.save();
+   updatedUser.password = undefined;
+   res.status(200).send({ 
+    message: "Notificaciones marcadas como vistas",
+     success: true,
+     data: updatedUser,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .send({ message: "Error al marcar las notificaciones como vistas", success: false, error });
+  }
+});
+
+router.post("/delete-all-notifications",authMiddlewares,async (req, res) => {
+  try {
+   const user = await User.findOne({_id: req.body.userId});
+   user.seenNotifications = [];
+   user.unseenNotifications = [];
+   const updatedUser = await user.save();
+   res.status(200).send({ 
+    message: "Notificaciones Eliminadas correctamente",
+     success: true,
+     data: updatedUser,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .send({ message: "Error al eliminar las Notificaciones", success: false, error });
+  }
+});
+
 
 module.exports = router;
