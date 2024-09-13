@@ -21,8 +21,6 @@ router.get("/get-all-doctors", authMiddlewares, async (req, res) => {
     }
     });
 
- 
-    
 router.get("/get-all-users", authMiddlewares, async (req, res) => {
   try {
     const users = await User.find({});
@@ -38,5 +36,34 @@ router.get("/get-all-users", authMiddlewares, async (req, res) => {
         error });
   }
 });
+
+router.post("/change-doctor-status", authMiddlewares, async (req, res) => {
+    try {
+      const { doctorId, status } = req.body;
+      const doctor = await Doctor.findByIdAndUpdate(doctorId, { status });
+        const user = await User.findOne({ _id: doctor.userId });
+        const unseenNotifications = user.unseenNotifications;
+        unseenNotifications.push(
+          {
+            type:"new-doctor-state-request",
+            message: `Su estado de doctor ha sido actualizado a ${status}`,
+            onclick: "/#",
+          })
+        user.isDoctor = status === "approved" ? true : false;
+        await user.save();
+
+        res.status(200).send({
+            message: "Estado del Doctor Actualizado Correctamente",
+            success: true, 
+            data: doctor});
+        
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+          message: "Error al Actualizar el Estado del Doctor", 
+          success: false, 
+          error });
+    }
+  });
 
 module.exports = router;
