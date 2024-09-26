@@ -160,4 +160,20 @@ router.post("/delete-all-notifications",authMiddlewares,async (req, res) => {
 });
 
 
+router.get("/get-all-approved-doctors", authMiddlewares, async (req, res) => {
+  try {
+      const doctors = await Doctor.find({status: "approved"});
+      res.status(200).send({ 
+          message:"Doctores Encotrados Satifactoriamente",
+          success: true, 
+          data: doctors });
+  } catch (error) {
+      console.log(error);
+      res.status(500).send({ 
+          message: "Error al Obtener los Doctores",
+          success: false, 
+          error });
+  }
+  });
+
 module.exports = router;
