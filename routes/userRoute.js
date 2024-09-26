@@ -100,7 +100,7 @@ router.post("/apply-doctor-account",authMiddlewares,async (req, res) => {
           doctorId: newDoctor._id,
           name: newDoctor.firstName + " " + newDoctor.lastName,
         },
-        onclick: "/admin/doctors"
+        onclick: "/doctors"
       })
     await User.findByIdAndUpdate(adminUser._id,{unseenNotifications: unseenNotifications});
     res

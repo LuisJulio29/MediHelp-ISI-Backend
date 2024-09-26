@@ -24,7 +24,7 @@ router.post("/get-doctor-info-by-user-id",authMiddlewares, async (req,res) => {
 router.post("/update-doctor-profile",authMiddlewares, async (req,res) => {
     try {
       const doctor = await Doctor.findOneAndUpdate({userId: req.body.userId},
-        req.body,
+        req.body
       );
       res
         .status(200)
