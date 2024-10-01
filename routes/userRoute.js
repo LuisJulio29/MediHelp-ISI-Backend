@@ -243,4 +243,21 @@ router.post("/check-booking-availability",authMiddlewares, async (req, res) => {
   }
 );
 
+router.get("/get-appointments-by-user-id", authMiddlewares, async (req, res) => {
+  try {
+    const appointments = await Appointment.find({userId:req.body.userId});
+    res.status(200).send({
+      message: "Citas Encotradas Satifactoriamente",
+      success: true,
+      data: appointments,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: "Error al Obtener las Citas",
+      success: false,
+      error,
+    });
+  }
+});
 module.exports = router;
