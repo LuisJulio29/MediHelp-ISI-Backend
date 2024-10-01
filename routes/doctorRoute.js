@@ -20,6 +20,22 @@ router.post("/get-doctor-info-by-user-id",authMiddlewares, async (req,res) => {
     }
   });
 
+router.post("/get-doctor-info-by-id",authMiddlewares, async (req,res) => {
+    try {
+      const doctor = await Doctor.findOne({ _id: req.body.doctorId});
+      res
+        .status(200)
+        .send({
+          message: "Doctor Encontrado",
+          success: true,
+          data: doctor,
+        }); 
+    } catch (error) {
+      res
+        .status(500)
+        .send({ message: "Error al obtener la informacion del Doctor", success: false, error });
+    }
+  });
 
 router.post("/update-doctor-profile",authMiddlewares, async (req,res) => {
     try {
