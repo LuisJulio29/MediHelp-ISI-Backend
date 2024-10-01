@@ -5,6 +5,7 @@ const Doctor = require("../models/doctorModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const authMiddlewares = require("../middlewares/authMiddlewares");
+const Appointment = require("../models/appointmentModel");
 
 router.post("/register", async (req, res) => {
   try {
@@ -61,22 +62,20 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/get-user-info-by-id",authMiddlewares, async (req,res) => {
+router.post("/get-user-info-by-id", authMiddlewares, async (req, res) => {
   try {
-    const user = await User.findOne({_id: req.body.userId});
+    const user = await User.findOne({ _id: req.body.userId });
     user.password = undefined;
     if (!user) {
       return res
         .status(200)
         .send({ message: "Usuario no encontrado", success: false });
     } else {
-      res
-        .status(200)
-        .send({
-          message: "Usuario Encontrado",
-          success: true,
-          data: user,
-        });
+      res.status(200).send({
+        message: "Usuario Encontrado",
+        success: true,
+        data: user,
+      });
     }
   } catch (error) {
     res
@@ -85,95 +84,140 @@ router.post("/get-user-info-by-id",authMiddlewares, async (req,res) => {
   }
 });
 
-router.post("/apply-doctor-account",authMiddlewares,async (req, res) => {
+router.post("/apply-doctor-account", authMiddlewares, async (req, res) => {
   try {
-    const newDoctor = new Doctor({...req.body,status: "pending"});
+    const newDoctor = new Doctor({ ...req.body, status: "pending" });
     await newDoctor.save();
-    const adminUser = await User.findOne({isAdmin: true});
+    const adminUser = await User.findOne({ isAdmin: true });
 
     const unseenNotifications = adminUser.unseenNotifications;
-    unseenNotifications.push(
-      {
-        type:"new-doctor-request",
-        message: `${newDoctor.firstName} ${newDoctor.lastName} ha aplicado para una cuenta de doctor`,
-        data:{
-          doctorId: newDoctor._id,
-          name: newDoctor.firstName + " " + newDoctor.lastName,
-        },
-        onclick: "/doctors"
-      })
-    await User.findByIdAndUpdate(adminUser._id,{unseenNotifications: unseenNotifications});
+    unseenNotifications.push({
+      type: "new-doctor-request",
+      message: `${newDoctor.firstName} ${newDoctor.lastName} ha aplicado para una cuenta de doctor`,
+      data: {
+        doctorId: newDoctor._id,
+        name: newDoctor.firstName + " " + newDoctor.lastName,
+      },
+      onclick: "/doctors",
+    });
+    await User.findByIdAndUpdate(adminUser._id, {
+      unseenNotifications: unseenNotifications,
+    });
     res
       .status(200)
-      .send({ message: "Aplicación a la cuenta de doctor enviada", success: true });
-
+      .send({
+        message: "Aplicación a la cuenta de doctor enviada",
+        success: true,
+      });
   } catch (error) {
     console.log(error);
     res
       .status(500)
-      .send({ message: "Error al aplicar a la cuenta de doctor", success: false, error });
+      .send({
+        message: "Error al aplicar a la cuenta de doctor",
+        success: false,
+        error,
+      });
   }
 });
 
-router.post("/mark-all-notifications-as-seen",authMiddlewares,async (req, res) => {
+router.post(
+  "/mark-all-notifications-as-seen",
+  authMiddlewares,
+  async (req, res) => {
+    try {
+      const user = await User.findOne({ _id: req.body.userId });
+      const unseenNotifications = user.unseenNotifications;
+      const seenNotifications = user.seenNotifications;
+      seenNotifications.push(...unseenNotifications);
+      user.unseenNotifications = [];
+      user.seenNotifications = seenNotifications;
+      const updatedUser = await user.save();
+      updatedUser.password = undefined;
+      res.status(200).send({
+        message: "Notificaciones marcadas como vistas",
+        success: true,
+        data: updatedUser,
+      });
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .send({
+          message: "Error al marcar las notificaciones como vistas",
+          success: false,
+          error,
+        });
+    }
+  }
+);
+
+router.post("/delete-all-notifications", authMiddlewares, async (req, res) => {
   try {
-   const user = await User.findOne({_id: req.body.userId});
-   const unseenNotifications = user.unseenNotifications;
-   const seenNotifications = user.seenNotifications;
-   seenNotifications.push(...unseenNotifications);
-   user.unseenNotifications = [];
-   user.seenNotifications = seenNotifications;
-   const updatedUser = await user.save();
-   updatedUser.password = undefined;
-   res.status(200).send({ 
-    message: "Notificaciones marcadas como vistas",
-     success: true,
-     data: updatedUser,
+    const user = await User.findOne({ _id: req.body.userId });
+    user.seenNotifications = [];
+    user.unseenNotifications = [];
+    const updatedUser = await user.save();
+    res.status(200).send({
+      message: "Notificaciones Eliminadas correctamente",
+      success: true,
+      data: updatedUser,
     });
-
   } catch (error) {
     console.log(error);
     res
       .status(500)
-      .send({ message: "Error al marcar las notificaciones como vistas", success: false, error });
+      .send({
+        message: "Error al eliminar las Notificaciones",
+        success: false,
+        error,
+      });
   }
 });
-
-router.post("/delete-all-notifications",authMiddlewares,async (req, res) => {
-  try {
-   const user = await User.findOne({_id: req.body.userId});
-   user.seenNotifications = [];
-   user.unseenNotifications = [];
-   const updatedUser = await user.save();
-   res.status(200).send({ 
-    message: "Notificaciones Eliminadas correctamente",
-     success: true,
-     data: updatedUser,
-    });
-
-  } catch (error) {
-    console.log(error);
-    res
-      .status(500)
-      .send({ message: "Error al eliminar las Notificaciones", success: false, error });
-  }
-});
-
 
 router.get("/get-all-approved-doctors", authMiddlewares, async (req, res) => {
   try {
-      const doctors = await Doctor.find({status: "approved"});
-      res.status(200).send({ 
-          message:"Doctores Encotrados Satifactoriamente",
-          success: true, 
-          data: doctors });
+    const doctors = await Doctor.find({ status: "approved" });
+    res.status(200).send({
+      message: "Doctores Encotrados Satifactoriamente",
+      success: true,
+      data: doctors,
+    });
   } catch (error) {
-      console.log(error);
-      res.status(500).send({ 
-          message: "Error al Obtener los Doctores",
-          success: false, 
-          error });
+    console.log(error);
+    res.status(500).send({
+      message: "Error al Obtener los Doctores",
+      success: false,
+      error,
+    });
   }
-  });
+});
+
+router.post("/book-appointment", authMiddlewares, async (req, res) => {
+  try {
+    req.body.status = "pending";
+    const newAppointment = new Appointment(req.body);
+    await newAppointment.save();
+
+    const user = await User.findOne({ _id: req.body.doctorInfo.userId });
+    user.unseenNotifications.push({
+      type: "new-appointment-request",
+      message: `Nueva Cita de ${req.body.userInfo.name}`,
+      onclickPath: "/doctor/appointments",
+    });
+    await user.save();
+    res.status(200).send({
+      message: "Cita Reservada Satifactoriamente",
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: "Error al Reservar la Cita",
+      success: false,
+      error,
+    });
+  }
+});
 
 module.exports = router;
