@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const authMiddlewares = require("../middlewares/authMiddlewares");
 const Appointment = require("../models/appointmentModel");
+const moment = require("moment");
 
 router.post("/register", async (req, res) => {
   try {
@@ -103,28 +104,21 @@ router.post("/apply-doctor-account", authMiddlewares, async (req, res) => {
     await User.findByIdAndUpdate(adminUser._id, {
       unseenNotifications: unseenNotifications,
     });
-    res
-      .status(200)
-      .send({
-        message: "Aplicación a la cuenta de doctor enviada",
-        success: true,
-      });
+    res.status(200).send({
+      message: "Aplicación a la cuenta de doctor enviada",
+      success: true,
+    });
   } catch (error) {
     console.log(error);
-    res
-      .status(500)
-      .send({
-        message: "Error al aplicar a la cuenta de doctor",
-        success: false,
-        error,
-      });
+    res.status(500).send({
+      message: "Error al aplicar a la cuenta de doctor",
+      success: false,
+      error,
+    });
   }
 });
 
-router.post(
-  "/mark-all-notifications-as-seen",
-  authMiddlewares,
-  async (req, res) => {
+router.post("/mark-all-notifications-as-seen",authMiddlewares,async (req, res) => {
     try {
       const user = await User.findOne({ _id: req.body.userId });
       const unseenNotifications = user.unseenNotifications;
@@ -141,16 +135,13 @@ router.post(
       });
     } catch (error) {
       console.log(error);
-      res
-        .status(500)
-        .send({
-          message: "Error al marcar las notificaciones como vistas",
-          success: false,
-          error,
-        });
+      res.status(500).send({
+        message: "Error al marcar las notificaciones como vistas",
+        success: false,
+        error,
+      });
     }
-  }
-);
+});
 
 router.post("/delete-all-notifications", authMiddlewares, async (req, res) => {
   try {
@@ -165,13 +156,11 @@ router.post("/delete-all-notifications", authMiddlewares, async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res
-      .status(500)
-      .send({
-        message: "Error al eliminar las Notificaciones",
-        success: false,
-        error,
-      });
+    res.status(500).send({
+      message: "Error al eliminar las Notificaciones",
+      success: false,
+      error,
+    });
   }
 });
 
@@ -196,6 +185,8 @@ router.get("/get-all-approved-doctors", authMiddlewares, async (req, res) => {
 router.post("/book-appointment", authMiddlewares, async (req, res) => {
   try {
     req.body.status = "pending";
+    req.body.date = moment(req.body.date).format("DD-MM-YYYY");
+    req.body.time = moment(req.body.time).format("HH:mm");
     const newAppointment = new Appointment(req.body);
     await newAppointment.save();
 
@@ -219,5 +210,37 @@ router.post("/book-appointment", authMiddlewares, async (req, res) => {
     });
   }
 });
+
+router.post("/check-booking-availability",authMiddlewares, async (req, res) => {
+    try {
+    const date = moment(req.body.date).format("DD-MM-YYYY");
+    const time = moment(req.body.time).format("HH:mm");
+    const doctorId = req.body.doctorId;
+    const appointments = await Appointment.find({
+      doctorId,
+      date,
+      time
+    });
+      if (appointments.length > 0) {
+        res.status(200).send({
+          message: "Cita NO disponible",
+          success: false,
+        });
+      } else {
+        res.status(200).send({
+          message: "Cita disponible",
+          success: true,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+        message: "Error al Chequear la disponibilidad de la Cita",
+        success: false,
+        error,
+      });
+    }
+  }
+);
 
 module.exports = router;
