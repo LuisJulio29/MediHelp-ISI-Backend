@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Doctor = require('../models/doctorModel');
 const authMiddlewares = require('../middlewares/authMiddlewares');
+const Appointment = require('../models/appointmentModel');
+const User = require('../models/userModel');
 
 router.post("/get-doctor-info-by-user-id",authMiddlewares, async (req,res) => {
     try {
@@ -53,6 +55,52 @@ router.post("/update-doctor-profile",authMiddlewares, async (req,res) => {
       res
         .status(500)
         .send({ message: "Error al actualizar la informacion del  Doctor", success: false, error });
+    }
+  });
+
+router.get("/get-appointments-by-doctor-id", authMiddlewares, async (req, res) => {
+    try {
+      const doctor = await Doctor.findOne({userId:req.body.userId});
+      const appointments = await Appointment.find({doctorId: doctor._id});
+      res.status(200).send({
+        message: "Citas Encotradas Satifactoriamente",
+        success: true,
+        data: appointments,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+        message: "Error al Obtener las Citas",
+        success: false,
+        error,
+      });
+    }
+  });
+
+router.post("/change-appointment-status", authMiddlewares, async (req, res) => {
+    try {
+      const { appointmentId, status } = req.body;
+      const appointment = await Appointment.findByIdAndUpdate(appointmentId, { status });
+        const user = await User.findOne({ _id: appointment.userId });
+        const unseenNotifications = user.unseenNotifications;
+        unseenNotifications.push(
+          {
+            type:"appointment-status-change",
+            message: `su estado de la cita ha sido actualizado a ${status}`,
+            onclick: "/appointments",
+          })
+        await user.save();
+
+        res.status(200).send({
+            message: "Estado de la cita ha sido Actualizado Correctamente",
+            success: true, });
+        
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+          message: "Error al Actualizar el Estado de la Cita", 
+          success: false, 
+          error });
     }
   });
 
