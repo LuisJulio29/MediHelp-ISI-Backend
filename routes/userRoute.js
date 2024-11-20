@@ -10,7 +10,7 @@ const moment = require("moment");
 
 router.post("/register", async (req, res) => {
   try {
-    const userexist = await User.findOne({ email: req.body.email });
+    const userexist = await User.findOne({ email: req.body.email } && {code: req.body.code});
     if (userexist) {
       return res
         .status(200)
