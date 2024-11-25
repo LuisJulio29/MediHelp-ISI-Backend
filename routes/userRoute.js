@@ -42,6 +42,7 @@ router.post("/login", async (req, res) => {
         .status(200)
         .send({ message: "Usuario no encontrado", success: false });
     }
+
     const ismatch = await bcrypt.compare(req.body.password, user.password);
     if (!ismatch) {
       return res
@@ -51,9 +52,13 @@ router.post("/login", async (req, res) => {
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
         expiresIn: "1d",
       });
-      res
-        .status(200)
-        .send({ message: "Usuario Logeado", success: true, data: token });
+
+      // Enviamos `isDoctor` y `name` en la respuesta
+      res.status(200).send({
+        message: "Usuario Logeado",
+        success: true,
+        data: { token, isDoctor: user.isDoctor, name: user.name },
+      });
     }
   } catch (error) {
     console.log(error);
