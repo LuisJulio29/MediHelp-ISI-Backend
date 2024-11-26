@@ -190,8 +190,6 @@ router.get("/get-all-approved-doctors", authMiddlewares, async (req, res) => {
 router.post("/book-appointment", authMiddlewares, async (req, res) => {
   try {
     req.body.status = "pending";
-    req.body.date = moment(req.body.date).format("DD-MM-YYYY");
-    req.body.time = moment(req.body.time).format("HH:mm");
     const newAppointment = new Appointment(req.body);
     await newAppointment.save();
 
@@ -216,37 +214,44 @@ router.post("/book-appointment", authMiddlewares, async (req, res) => {
   }
 });
 
-router.post("/check-booking-availability",authMiddlewares, async (req, res) => {
-    try {
-    const date = moment(req.body.date).format("DD-MM-YYYY");
-    const time = moment(req.body.time).format("HH:mm");
-    const doctorId = req.body.doctorId;
-    const appointments = await Appointment.find({
-      doctorId,
-      date,
-      time
-    });
-      if (appointments.length > 0) {
-        res.status(200).send({
-          message: "Cita NO disponible",
-          success: false,
-        });
-      } else {
-        res.status(200).send({
-          message: "Cita disponible",
-          success: true,
-        });
+router.post("/get-available-slots", authMiddlewares, async (req, res) => {
+  try {
+    const { doctorId, date } = req.body;
+    const doctor = await Doctor.findById(doctorId);
+    const appointments = await Appointment.find({ doctorId, date });
+    const takenSlots = appointments.map((appt) => appt.time);
+
+    const startTime = moment(doctor.timings[0], "HH:mm");
+    const endTime = moment(doctor.timings[1], "HH:mm");
+    const lunchStart = moment("12:00", "HH:mm");
+    const lunchEnd = moment("14:00", "HH:mm");
+
+    const availableSlots = [];
+    while (startTime.isBefore(endTime)) {
+      const formattedTime = startTime.format("HH:mm");
+      if (
+        !takenSlots.includes(formattedTime) &&
+        (startTime.isBefore(lunchStart) || startTime.isAfter(lunchEnd))
+      ) {
+        availableSlots.push(formattedTime);
       }
-    } catch (error) {
-      console.log(error);
-      res.status(500).send({
-        message: "Error al Chequear la disponibilidad de la Cita",
-        success: false,
-        error,
-      });
+      startTime.add(1, "hour");
     }
+
+    res.status(200).send({
+      message: "Horarios disponibles obtenidos exitosamente",
+      success: true,
+      data: availableSlots,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: "Error al obtener horarios disponibles",
+      success: false,
+      error,
+    });
   }
-);
+});
 
 router.get("/get-appointments-by-user-id", authMiddlewares, async (req, res) => {
   try {
