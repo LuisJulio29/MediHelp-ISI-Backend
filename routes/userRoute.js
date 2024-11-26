@@ -224,7 +224,7 @@ router.post("/get-available-slots", authMiddlewares, async (req, res) => {
     const startTime = moment(doctor.timings[0], "HH:mm");
     const endTime = moment(doctor.timings[1], "HH:mm");
     const lunchStart = moment("12:00", "HH:mm");
-    const lunchEnd = moment("14:00", "HH:mm");
+    const lunchEnd = moment("13:00", "HH:mm");
 
     const availableSlots = [];
     while (startTime.isBefore(endTime)) {
