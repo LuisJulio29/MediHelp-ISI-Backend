@@ -265,4 +265,31 @@ router.get("/get-appointments-by-user-id", authMiddlewares, async (req, res) => 
     });
   }
 });
+
+router.post("/change-appointment-status", authMiddlewares, async (req, res) => {
+  try {
+    const { appointmentId, status } = req.body;
+    const appointment = await Appointment.findByIdAndUpdate(appointmentId, { status });
+      const user = await User.findOne({ _id: appointment.doctorInfo.userId });
+      const unseenNotifications = user.unseenNotifications;
+      unseenNotifications.push(
+        {
+          type:"appointment-status-change",
+          message: `el usuario ${appointment.userInfo.name} ha cancelado la cita`,
+          onclick: "/doctor/appointments",
+        })
+      await user.save();
+
+      res.status(200).send({
+          message: "Estado de la cita ha sido Actualizado Correctamente",
+          success: true, });
+      
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+        message: "Error al Actualizar el Estado de la Cita", 
+        success: false, 
+        error });
+  }
+});
 module.exports = router;
