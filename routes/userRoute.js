@@ -197,7 +197,7 @@ router.post("/book-appointment", authMiddlewares, async (req, res) => {
     user.unseenNotifications.push({
       type: "new-appointment-request",
       message: `Nueva Cita de ${req.body.userInfo.name}`,
-      onclickPath: "/doctor/appointments",
+      onclick: "/doctor/appointments",
     });
     await user.save();
     res.status(200).send({
