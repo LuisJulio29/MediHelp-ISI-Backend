@@ -255,12 +255,12 @@ router.post("/get-available-slots", authMiddlewares, async (req, res) => {
 
 router.get("/get-appointments-by-user-id", authMiddlewares, async (req, res) => {
   try {
-    const appointments = await Appointment.find({userId:req.body.userId});
-    const approvedAppointments = appointments.filter(appointment => appointment.status === "approved");
+    // Consultar y ordenar por fecha y hora
+    const appointments = await Appointment.find({ userId: req.body.userId, status:{ $in: ["approved", "pending"] }}).sort({ date: 1, time: 1 });
     res.status(200).send({
-      message: "Citas Encotradas Satifactoriamente",
+      message: "Citas Encontradas Satisfactoriamente",
       success: true,
-      data: approvedAppointments,
+      data: appointments,
     });
   } catch (error) {
     console.log(error);

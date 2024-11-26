@@ -61,12 +61,11 @@ router.post("/update-doctor-profile",authMiddlewares, async (req,res) => {
 router.get("/get-appointments-by-doctor-id", authMiddlewares, async (req, res) => {
     try {
       const doctor = await Doctor.findOne({userId:req.body.userId});
-      const appointments = await Appointment.find({doctorId: doctor._id});
-      const approvedAppointments = appointments.filter(appointment => appointment.status === "approved" || appointment.status === "pending");
+      const appointments = await Appointment.find({doctorId: doctor._id,status:{ $in: ["approved", "pending"] }}).sort({ date: 1, time: 1 })
       res.status(200).send({
         message: "Citas Encotradas Satifactoriamente",
         success: true,
-        data: approvedAppointments,
+        data: appointments,
       });
     } catch (error) {
       console.log(error);
