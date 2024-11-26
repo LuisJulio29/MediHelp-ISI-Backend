@@ -62,10 +62,11 @@ router.get("/get-appointments-by-doctor-id", authMiddlewares, async (req, res) =
     try {
       const doctor = await Doctor.findOne({userId:req.body.userId});
       const appointments = await Appointment.find({doctorId: doctor._id});
+      const approvedAppointments = appointments.filter(appointment => appointment.status === "approved" || appointment.status === "pending");
       res.status(200).send({
         message: "Citas Encotradas Satifactoriamente",
         success: true,
-        data: appointments,
+        data: approvedAppointments,
       });
     } catch (error) {
       console.log(error);

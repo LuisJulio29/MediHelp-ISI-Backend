@@ -251,10 +251,11 @@ router.post("/check-booking-availability",authMiddlewares, async (req, res) => {
 router.get("/get-appointments-by-user-id", authMiddlewares, async (req, res) => {
   try {
     const appointments = await Appointment.find({userId:req.body.userId});
+    const approvedAppointments = appointments.filter(appointment => appointment.status === "approved");
     res.status(200).send({
       message: "Citas Encotradas Satifactoriamente",
       success: true,
-      data: appointments,
+      data: approvedAppointments,
     });
   } catch (error) {
     console.log(error);
