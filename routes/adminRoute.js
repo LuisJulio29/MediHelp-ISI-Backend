@@ -23,7 +23,7 @@ router.get("/get-all-doctors", authMiddlewares, async (req, res) => {
 
 router.get("/get-all-users", authMiddlewares, async (req, res) => {
   try {
-    const users = await User.find({});
+    const users = await User.find({isDoctor: false, isAdmin: false});
     res.status(200).send({ 
         message:"Usuarios Encotrados Satifactoriamente",
         success: true, 
