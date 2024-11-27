@@ -66,4 +66,24 @@ router.post("/change-doctor-status", authMiddlewares, async (req, res) => {
     }
   });
 
+  
+router.delete("/delete-user/:id", authMiddlewares, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await User.findByIdAndDelete(id);
+      res.status(200).send({
+        message: "Usuario eliminado correctamente",
+        success: true,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+        message: "Error al eliminar el usuario",
+        success: false,
+        error,
+      });
+    }
+  });
+  
+
 module.exports = router;
