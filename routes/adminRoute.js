@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require("../models/userModel");
 const Doctor = require("../models/doctorModel");
 const authMiddlewares = require("../middlewares/authMiddlewares");
+const bcrypt = require("bcryptjs");
 
 
 router.get("/get-all-doctors", authMiddlewares, async (req, res) => {
@@ -66,7 +67,6 @@ router.post("/change-doctor-status", authMiddlewares, async (req, res) => {
     }
   });
 
-  
 router.delete("/delete-user/:id", authMiddlewares, async (req, res) => {
     try {
       const { id } = req.params;
@@ -85,5 +85,59 @@ router.delete("/delete-user/:id", authMiddlewares, async (req, res) => {
     }
   });
   
-
+  // Crear un doctor y su usuario asociado
+router.post("/create-doctor", async (req, res) => {
+    try {
+      const { firstName, lastName, email, phoneNumber, department, timings, code, password } = req.body;
+  
+      // Verificar si el usuario ya existe
+      const userExist = await User.findOne({ email, code });
+      if (userExist) {
+        return res.status(400).send({
+          message: "El usuario ya existe con este email y código.",
+          success: false,
+        });
+      }
+  
+      // Crear el usuario
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+  
+      const newUser = new User({
+        name: `${firstName} ${lastName}`,
+        code,
+        email,
+        password: hashedPassword,
+        isDoctor: true, // Indicar que es doctor
+      });
+      const savedUser = await newUser.save();
+  
+      // Crear el doctor con referencia al usuario
+      const newDoctor = new Doctor({
+        userId: savedUser._id,
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        department,
+        timings,
+      });
+  
+      await newDoctor.save();
+  
+      res.status(201).send({
+        message: "Doctor creado exitosamente",
+        success: true,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({
+        message: "Error al crear el doctor",
+        success: false,
+        error,
+      });
+    }
+  });
+  
+  
 module.exports = router;
