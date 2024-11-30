@@ -8,7 +8,7 @@ const doctorSchema = new mongoose.Schema(
     phoneNumber: {type: String,required: true,},
     department: {type: String,required: true,},
    timings:{type: Array,required: true,},
-   status:{type: String,default: "pending",},
+   status:{type: String,default: "approved",},
   },
   {
     timestamps: true,
