@@ -90,39 +90,6 @@ router.post("/get-user-info-by-id", authMiddlewares, async (req, res) => {
   }
 });
 
-router.post("/apply-doctor-account", authMiddlewares, async (req, res) => {
-  try {
-    const newDoctor = new Doctor({ ...req.body, status: "pending" });
-    await newDoctor.save();
-    const adminUser = await User.findOne({ isAdmin: true });
-
-    const unseenNotifications = adminUser.unseenNotifications;
-    unseenNotifications.push({
-      type: "new-doctor-request",
-      message: `${newDoctor.firstName} ${newDoctor.lastName} ha aplicado para una cuenta de doctor`,
-      data: {
-        doctorId: newDoctor._id,
-        name: newDoctor.firstName + " " + newDoctor.lastName,
-      },
-      onclick: "/doctors",
-    });
-    await User.findByIdAndUpdate(adminUser._id, {
-      unseenNotifications: unseenNotifications,
-    });
-    res.status(200).send({
-      message: "Aplicación a la cuenta de doctor enviada",
-      success: true,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      message: "Error al aplicar a la cuenta de doctor",
-      success: false,
-      error,
-    });
-  }
-});
-
 router.post("/mark-all-notifications-as-seen",authMiddlewares,async (req, res) => {
     try {
       const user = await User.findOne({ _id: req.body.userId });
